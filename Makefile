@@ -1,4 +1,4 @@
-FW_URL		:= https://github.com/raspberrypi/firmware/branches/stable/boot
+FW_URL		:= https://github.com/raspberrypi/firmware/archive/fcf8d2f7639ad8d0330db9c8db9b71bd33eaaa28.tar.gz
 
 EFI_BUILD	:= RELEASE
 EFI_ARCH	:= AARCH64
@@ -25,9 +25,10 @@ submodules :
 
 firmware :
 	if [ ! -e firmware ] ; then \
-		$(RM) -rf firmware-tmp ; \
-		svn export $(FW_URL) firmware-tmp && \
-		mv firmware-tmp firmware ; \
+		wget -O firmware-tmp.tar.gz $(FW_URL) && \
+		mkdir -p firmware && \
+		tar xf firmware-tmp.tar.gz --strip-components=1 -C firmware && \
+		rm firmware-tmp.tar.gz ; \
 	fi
 
 efi : $(EFI_FD)
@@ -48,7 +49,7 @@ $(IPXE_EFI) : submodules
 sdcard : firmware efi ipxe
 	$(RM) -rf sdcard
 	mkdir -p sdcard
-	cp -r $(sort $(filter-out firmware/kernel%,$(wildcard firmware/*))) \
+	cp -r $(sort $(filter-out firmware/boot/kernel%,$(wildcard firmware/boot/*))) \
 		sdcard/
 	cp config.txt $(EFI_FD) edk2/License.txt sdcard/
 	mkdir -p sdcard/efi/boot
